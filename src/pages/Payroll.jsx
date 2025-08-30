@@ -161,7 +161,7 @@ useEffect(() => {
   const fetchEmployeeData = async () => {
     try {
       const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec?sheet=JOINING&action=fetch"
+        "https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec?sheet=JOINING&action=fetch"
       );
       const data = await response.json();
 
@@ -213,7 +213,7 @@ const handleEmployeeSelect = (employeeName) => {
       try {
         // Fetch data from Google Sheets using the provided AppScript URL
         const response = await fetch(
-          "https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec?sheet=Salary&action=fetch"
+          "https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec?sheet=Salary&action=fetch"
         );
         const data = await response.json();
 
@@ -334,7 +334,7 @@ const handleSubmitNewPayroll = async () => {
     formData.append('rowData', JSON.stringify(sheetData));
 
     // Use a proxy or direct URL with different approach
-    const scriptUrl = 'https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec';
+    const scriptUrl = 'https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec';
     
     // Method 1: Use a GET request instead (if your AppScript supports it)
     const getUrl = `${scriptUrl}?sheet=Salary&action=insert&rowData=${encodeURIComponent(JSON.stringify(sheetData))}`;
@@ -366,7 +366,7 @@ const handleSubmitNewPayroll = async () => {
 
       // Refresh the data
       const fetchResponse = await fetch(
-        "https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec?sheet=Salary&action=fetch"
+        "https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec?sheet=Salary&action=fetch"
       );
       const fetchData = await fetchResponse.json();
 

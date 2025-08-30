@@ -61,70 +61,32 @@ const CallTracker = () => {
   const [historyData, setHistoryData] = useState([]);
   const [error, setError] = useState(null);
 
-  const fetchEnquiryData = async () => {
-    setLoading(true);
-    setTableLoading(true);
-    setError(null);
+const fetchEnquiryData = async () => {
+  setLoading(true);
+  setTableLoading(true);
+  setError(null);
 
-    try {
-      const [enquiryResponse, followUpResponse] = await Promise.all([
-        fetch('https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec?sheet=ENQUIRY&action=fetch'),
-        fetch('https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec?sheet=Follow - Up&action=fetch')
-      ]);
+  try {
+    const [enquiryResponse, followUpResponse] = await Promise.all([
+      fetch('https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec?sheet=ENQUIRY&action=fetch'),
+      fetch('https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec?sheet=Follow - Up&action=fetch')
+    ]);
+    
+    if (!enquiryResponse.ok || !followUpResponse.ok) {
+      throw new Error(`HTTP error! status: ${enquiryResponse.status} or ${followUpResponse.status}`);
+    }
+    
+    const [enquiryResult, followUpResult] = await Promise.all([
+      enquiryResponse.json(),
+      followUpResponse.json()
+    ]);
+    
+    // Handle case when there's no data in the sheet
+    if (!enquiryResult.success || !enquiryResult.data || enquiryResult.data.length < 7) {
+      console.log('No data or not enough rows in enquiry sheet');
+      setEnquiryData([]); // Set empty array instead of throwing error
       
-      if (!enquiryResponse.ok || !followUpResponse.ok) {
-        throw new Error(`HTTP error! status: ${enquiryResponse.status} or ${followUpResponse.status}`);
-      }
-      
-      const [enquiryResult, followUpResult] = await Promise.all([
-        enquiryResponse.json(),
-        followUpResponse.json()
-      ]);
-      
-      if (!enquiryResult.success || !enquiryResult.data || enquiryResult.data.length < 7) {
-        throw new Error(enquiryResult.error || 'Not enough rows in enquiry sheet data');
-      }
-      
-      // Process enquiry data
-      const enquiryHeaders = enquiryResult.data[5].map(h => h.trim());
-      const enquiryDataFromRow7 = enquiryResult.data.slice(6);
-      
-      const getIndex = (headerName) => enquiryHeaders.findIndex(h => h === headerName);
-      
-      const processedEnquiryData = enquiryDataFromRow7
-        .filter(row => {
-          const plannedIndex = getIndex('Planned');
-          const actualIndex = getIndex('Actual');
-          const planned = row[plannedIndex];
-          const actual = row[actualIndex];
-          return planned && (!actual || actual === '');
-        })
-        .map(row => ({
-          id: row[getIndex('Timestamp')],
-          indentNo: row[getIndex('Indent Number')],
-          candidateEnquiryNo: row[getIndex('Candidate Enquiry Number')],
-          applyingForPost: row[getIndex('Applying For the Post')],
-          candidateName: row[getIndex('Candidate Name')],
-          candidateDOB: row[getIndex('DOB')],
-          candidatePhone: row[getIndex('Candidate Phone Number')],
-          candidateEmail: row[getIndex('Candidate Email')],
-          previousCompany: row[getIndex('Previous Company Name')],
-          jobExperience: row[getIndex('Job Experience')] || '',
-          lastSalary: row[getIndex('Last Salary Drawn')] || '',
-          previousPosition: row[getIndex('Previous Position')] || '',
-          reasonForLeaving: row[getIndex('Reason Of Leaving Previous Company')] || '',
-          maritalStatus: row[getIndex('Marital Status')] || '',
-          lastEmployerMobile: row[getIndex('Last Employer Mobile Number')] || '',
-          candidatePhoto: row[getIndex('Candidate Photo')] || '',
-          candidateResume: row[19] || '',
-          referenceBy: row[getIndex('Reference By')] || '',
-          presentAddress: row[getIndex('Present Address')] || '',
-          aadharNo: row[getIndex('Aadhar Number')] || ''
-        }));
-      
-      setEnquiryData(processedEnquiryData);
-      
-      // Process follow-up data for filtering
+      // Still try to process follow-up data if available
       if (followUpResult.success && followUpResult.data) {
         const rawFollowUpData = followUpResult.data || followUpResult;
         const followUpRows = Array.isArray(rawFollowUpData[0]) ? rawFollowUpData.slice(1) : rawFollowUpData;
@@ -135,17 +97,74 @@ const CallTracker = () => {
         }));
         
         setFollowUpData(processedFollowUpData);
+      } else {
+        setFollowUpData([]);
       }
       
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError(error.message);
-      toast.error('Failed to fetch data');
-    } finally {
-      setLoading(false);
-      setTableLoading(false);
+      return; // Exit early since there's no enquiry data
     }
-  };
+    
+    // Process enquiry data (existing code)
+    const enquiryHeaders = enquiryResult.data[5].map(h => h.trim());
+    const enquiryDataFromRow7 = enquiryResult.data.slice(6);
+    
+    const getIndex = (headerName) => enquiryHeaders.findIndex(h => h === headerName);
+    
+    const processedEnquiryData = enquiryDataFromRow7
+      .filter(row => {
+        const plannedIndex = getIndex('Planned');
+        const actualIndex = getIndex('Actual');
+        const planned = row[plannedIndex];
+        const actual = row[actualIndex];
+        return planned && (!actual || actual === '');
+      })
+      .map(row => ({
+        id: row[getIndex('Timestamp')],
+        indentNo: row[getIndex('Indent Number')],
+        candidateEnquiryNo: row[getIndex('Candidate Enquiry Number')],
+        applyingForPost: row[getIndex('Applying For the Post')],
+        candidateName: row[getIndex('Candidate Name')],
+        candidateDOB: row[getIndex('DOB')],
+        candidatePhone: row[getIndex('Candidate Phone Number')],
+        candidateEmail: row[getIndex('Candidate Email')],
+        previousCompany: row[getIndex('Previous Company Name')],
+        jobExperience: row[getIndex('Job Experience')] || '',
+        lastSalary: row[getIndex('Last Salary Drawn')] || '',
+        previousPosition: row[getIndex('Previous Position')] || '',
+        reasonForLeaving: row[getIndex('Reason Of Leaving Previous Company')] || '',
+        maritalStatus: row[getIndex('Marital Status')] || '',
+        lastEmployerMobile: row[getIndex('Last Employer Mobile Number')] || '',
+        candidatePhoto: row[getIndex('Candidate Photo')] || '',
+        candidateResume: row[19] || '',
+        referenceBy: row[getIndex('Reference By')] || '',
+        presentAddress: row[getIndex('Present Address')] || '',
+        aadharNo: row[getIndex('Aadhar Number')] || ''
+      }));
+    
+    setEnquiryData(processedEnquiryData);
+    
+    // Process follow-up data for filtering
+    if (followUpResult.success && followUpResult.data) {
+      const rawFollowUpData = followUpResult.data || followUpResult;
+      const followUpRows = Array.isArray(rawFollowUpData[0]) ? rawFollowUpData.slice(1) : rawFollowUpData;
+      
+      const processedFollowUpData = followUpRows.map(row => ({
+        enquiryNo: row[1] || '',       // Column B (index 1) - Enquiry No
+        status: row[2] || ''           // Column C (index 2) - Status
+      }));
+      
+      setFollowUpData(processedFollowUpData);
+    }
+    
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    setError(error.message);
+    toast.error('Failed to fetch data');
+  } finally {
+    setLoading(false);
+    setTableLoading(false);
+  }
+};
 
 const fetchFollowUpData = async () => {
   setLoading(true);
@@ -154,7 +173,7 @@ const fetchFollowUpData = async () => {
 
   try {
     const response = await fetch(
-      'https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec?sheet=Follow - Up&action=fetch'
+      'https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec?sheet=Follow - Up&action=fetch'
     );
 
     if (!response.ok) {
@@ -249,7 +268,7 @@ const fetchFollowUpData = async () => {
   };
 
   const postToJoiningSheet = async (rowData) => {
-  const URL = 'https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec';
+  const URL = 'https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec';
 
   try {
     console.log('Attempting to post:', {
@@ -296,7 +315,7 @@ const fetchFollowUpData = async () => {
 
 
 const postToSheet = async (rowData) => {
-  const URL = 'https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec';
+  const URL = 'https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec';
 
   try {
     console.log('Attempting to post:', {
@@ -352,7 +371,7 @@ const postToSheet = async (rowData) => {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
- const uploadFileToDrive = async (file, folderId = '1NJbUxhpLSktndUAWcghBjwMHKZ6SwIWL') => {
+ const uploadFileToDrive = async (file, folderId = '1AXxD0msg8dSuMxoUH7KrmJ7LjuTPKUK6') => {
     try {
       // Convert file to base64
       const reader = new FileReader();
@@ -370,7 +389,7 @@ const postToSheet = async (rowData) => {
       params.append('folderId', folderId);
 
       const response = await fetch(
-        'https://script.google.com/macros/s/AKfycbw4owzmbghov5H20X2JiuOTiz4lH-jtHZQyPRuMPeO-iZQfD0EGdmgDfk9F2HdZjO9l/exec',
+        'https://script.google.com/macros/s/AKfycbyWlc2CfrDgr1JGsJHl1N4nRf-GAR-m6yqPPuP8Oggcafv3jo4thFrhfAX2vnfSzLQLlg/exec',
         {
           method: 'POST',
           headers: {
