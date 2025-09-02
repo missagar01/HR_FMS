@@ -361,7 +361,7 @@ const handleSubmit = async (e) => {
           ) : (
             <>
               <Plus size={16} className="mr-2" />
-              Create Indent
+              Create Opening
             </>
           )}
         </button>

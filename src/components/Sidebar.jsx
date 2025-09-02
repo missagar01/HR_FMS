@@ -46,7 +46,7 @@ const Sidebar = ({ onClose }) => {
 
   const adminMenuItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/indent', icon: FileText, label: 'Indent' },
+    { path: '/indent', icon: FileText, label: 'Opening' },
     { path: '/find-enquiry', icon: Search, label: 'Find Enquiry' },
     { path: '/call-tracker', icon: Phone, label: 'Call Tracker' },
     { path: '/after-joining-work', icon: UserCheck, label: 'After Joining Work' },
